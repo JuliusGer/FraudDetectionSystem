@@ -4,6 +4,7 @@ import numpy as np
 import plotly.express as px
 from datetime import datetime
 from sqlalchemy import create_engine, text
+from sql_scripts import *
 
 # --- Параметры подключения к БД ---
 db_user = "postgres"
@@ -15,33 +16,14 @@ db_name = "FraudDetection"
 engine = create_engine(f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
 
 # --- Загрузка данных из БД ---
-fraud_data = pd.read_sql("""
-    SELECT transaction_id, client_id, model_fraud_marker, operator_fraud_marker, 
-    model_decision_timestamp, operator_decision_timestamp
-    FROM transactions.fraud_transactions
-    WHERE 
-    model_fraud_marker is true
-    and operator_fraud_marker is null
-""", engine)
+fraud_data = pd.read_sql(fraud_data_sql, engine)
 
-fraud_stats = pd.read_sql("""
-    SELECT model_decision_timestamp::date as date,
-    count(case when model_fraud_marker = True then model_fraud_marker end) as model_fraud_count,
-    count(case when operator_fraud_marker = True then operator_fraud_marker end) as operator_fraud_count
-    FROM transactions.fraud_transactions 
-    WHERE model_decision_timestamp between now()::date-interval '7' day and now()::date
-    GROUP BY model_decision_timestamp::date
-    ORDER BY model_decision_timestamp::date
-""", engine)
+fraud_stats = pd.read_sql(fraud_stats_sql, engine)
 
 fraud_stats = fraud_stats.melt(id_vars='date', value_vars=['model_fraud_count', 'operator_fraud_count'],
                                var_name='decision_maker', value_name='fraud_count')
 
-operator_actions = pd.read_sql("""
-    SELECT * 
-    FROM operators.operator_stats 
-    WHERE date = now()::date
-""", engine)
+operator_actions = pd.read_sql(operator_actions_sql, engine)
 
 # --- UI ---
 operator_name = "Тестова Т. Т."
@@ -70,13 +52,7 @@ if st.button("Отправить результаты"):
         transaction_id = row["transaction_id"]
         with engine.begin() as conn:
             conn.execute(
-                text("""
-                        UPDATE transactions.fraud_transactions
-                        SET operator_fraud_marker = :op_val,
-                            operator_decision_timestamp = now(),
-                            operator_id = :op_id
-                        WHERE transaction_id = :tx_id
-                """),
+                text(update_transactions_fraud_transactions_sql),
                 {"op_val": operator_value, "op_id": 1, "tx_id": transaction_id}
             )
     st.success("Результаты успешно сохранены.")
