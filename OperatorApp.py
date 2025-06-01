@@ -50,7 +50,6 @@ updated_data = st.data_editor(
 if st.button("Отправить результаты"):
     edited_df = updated_data.copy()
 
-    # st.success("Результаты успешно сохранены.")
     st.rerun()
 
 col1, col2 = st.columns(2)
