@@ -7,7 +7,7 @@ fraud_data_sql = '''
     and operator_fraud_marker is null
 '''
 
-fraud_stats_sql = '''
+fraud_stats_sql = ''' 
     SELECT model_decision_timestamp::date as date,
     count(case when model_fraud_marker = True then model_fraud_marker end) as model_fraud_count,
     count(case when operator_fraud_marker = True then operator_fraud_marker end) as operator_fraud_count
