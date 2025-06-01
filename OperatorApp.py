@@ -62,7 +62,7 @@ if st.button("Отправить результаты"):
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Динамика фродовых операций (по дням)")
+    st.subheader("Динамика фродовых операций (по дням) ")
     fig1 = px.bar(fraud_stats, x="date", y="fraud_count", color='decision_maker', labels={"date": "Дата", "fraud_count": "Количество"})
     st.plotly_chart(fig1, use_container_width=True)
 
